@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Passo 4: Farmácia - Dispensação</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .prescricao-item { 
+            background-color: #fff; 
+            border: 1px solid #ddd; 
+            margin-bottom: 15px; 
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .prescricao-item ul { list-style-type: square; margin-left: 20px; }
+    </style>
+</head>
+<body>
+    <div class="prontuario-container">
+        <h2>Passo 4: Fila de Dispensação da Farmácia</h2>
+        <div id="fila-farmacia">
+            <p>Carregando prescrições pendentes...</p>
+        </div>
+    </div>
+
+    <script>
+        async function carregarFilaFarmacia() {
+            const response = await fetch('/api/farmacia/pendentes');
+            const prescricoes = await response.json();
+            const container = document.getElementById('fila-farmacia');
+            container.innerHTML = '';
+
+            if (prescricoes.length === 0) {
+                container.innerHTML = '<p>Nenhuma prescrição pendente.</p>';
+                return;
+            }
+
+            prescricoes.forEach(prescricao => {
+                const item = document.createElement('div');
+                item.className = 'prescricao-item';
+
+                // Cria a lista de materiais do kit
+                let materiaisHtml = '<ul>';
+                prescricao.materiais_para_baixa.forEach(mat => {
+                    materiaisHtml += `<li>${mat.item_sal} (Qtd: ${mat.qtd_total} ${mat.un || ''})</li>`;
+                });
+                materiaisHtml += '</ul>';
+
+                item.innerHTML = `
+                    <h3>Paciente: ${prescricao.paciente_nome}</h3>
+                    <p><strong>Item Prescrito: ${prescricao.item_prescrito} (Qtd: ${prescricao.qtd_prescrita})</strong></p>
+                    <p><strong>Materiais para baixa (Kit Automático):</strong></p>
+                    ${materiaisHtml}
+                    <button class="btn-salvar" onclick="dispensar(${prescricao.id})">Dispensar e Dar Baixa</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        async function dispensar(id) {
+            const response = await fetch(`/api/farmacia/dispensar/${id}`, { method: 'POST' });
+            if (response.ok) {
+                alert('Item dispensado com sucesso!');
+                carregarFilaFarmacia(); // Recarrega a lista
+            } else {
+                alert('Erro ao dispensar item.');
+            }
+        }
+
+        // Carrega a fila ao abrir
+        carregarFilaFarmacia();
+        // Recarrega a cada 10 segundos
+        setInterval(carregarFilaFarmacia, 10000);
+    </script>
+</body>
+</html>
