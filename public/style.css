@@ -1,4 +1,3 @@
-/* --- O TEU STYLE.CSS (copiado) --- */
 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; }
 .container, .container-pep { max-width: 900px; margin: 0 auto; }
 h1, h2, h3 { color: #1877f2; }
@@ -48,7 +47,7 @@ hr { border: none; border-top: 1px solid #dddfe2; margin: 20px 0; }
 .encaminhamento-buttons button { flex: 1; }
 #linhaDoTempo { border: 1px solid #eee; padding: 15px; max-height: 400px; overflow-y: auto; background-color: #fafafa; }
 
-/* --- NOVOS ESTILOS (Para o medico.html) --- */
+/* --- medico.html --- */
 .pepps-container {
     display: flex;
     flex-direction: row;
@@ -67,7 +66,7 @@ hr { border: none; border-top: 1px solid #dddfe2; margin: 20px 0; }
 }
 
 #atendimento-main {
-    flex-grow: 1; /* Ocupa o resto do espaço */
+    flex-grow: 1; 
     overflow-y: auto;
     padding: 0; margin: 0; 
 }
@@ -88,7 +87,7 @@ hr { border: none; border-top: 1px solid #dddfe2; margin: 20px 0; }
     background-color: #f0f2f5;
 }
 
-/* Ajustes no CSS do PEP para o layout novo */
+
 body {
     padding: 0; 
     margin-top: 0; 
@@ -102,3 +101,27 @@ body {
     /* Se o cabeçalho estiver visível, ajusta a altura */
     height: calc(100vh - 120px); /* 120px é a altura estimada do cabeçalho */
 }
+
+/* --- Adição para Cores Dinâmicas na Triagem --- */
+#classificacaoSugerida {
+    display: inline-block;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-size: 1.1em;
+    color: #fff; /* Texto branco para fundos coloridos */
+    background-color: #6c757d; /* Cinzento padrão */
+    transition: background-color 0.3s ease;
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Removemos a cor 'text-primary' que estava no HTML */
+#classificacaoSugerida.text-primary {
+    color: #fff !important; 
+}
+
+/* Cores de fundo (reutilizando as classes existentes) */
+#classificacaoSugerida.risk-vermelho { background-color: #d9534f; }
+#classificacaoSugerida.risk-amarelo { background-color: #f0ad4e; color: #333; }
+#classificacaoSugerida.risk-verde { background-color: #5cb85c; }
+#classificacaoSugerida.risk-azul { background-color: #1877f2; }

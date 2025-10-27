@@ -76,6 +76,7 @@ function initTriagem() {
     });
 }
 
+// --- FUNÇÃO MODIFICADA (1/2) ---
 function sugerirClassificacao() {
     const fc = parseInt(document.getElementById('frequencia_cardiaca').value) || 0;
     const fr = parseInt(document.getElementById('frequencia_respiratoria').value) || 0;
@@ -88,13 +89,21 @@ function sugerirClassificacao() {
     
     // Lógica de sugestão (simplificada da tua)
     if (fc > 140 || fr > 35 || sat < 90 || dor >= 8) {
-        sugerida.textContent = 'VERMELHO'; selectManual.value = 'vermelho';
+        sugerida.textContent = 'VERMELHO';
+        sugerida.className = 'risk-vermelho'; // Muda a cor
+        selectManual.value = 'vermelho';
     } else if (fc > 120 || fr > 28 || sat < 95 || dor >= 6 || temp > 38.5) {
-        sugerida.textContent = 'AMARELO'; selectManual.value = 'amarelo';
+        sugerida.textContent = 'AMARELO';
+        sugerida.className = 'risk-amarelo'; // Muda a cor
+        selectManual.value = 'amarelo';
     } else if (dor > 0 || temp > 37.5) {
-        sugerida.textContent = 'VERDE'; selectManual.value = 'verde';
+        sugerida.textContent = 'VERDE';
+        sugerida.className = 'risk-verde'; // Muda a cor
+        selectManual.value = 'verde';
     } else {
-        sugerida.textContent = 'AZUL'; selectManual.value = 'azul';
+        sugerida.textContent = 'AZUL';
+        sugerida.className = 'risk-azul'; // Muda a cor
+        selectManual.value = 'azul';
     }
 }
 
@@ -139,7 +148,7 @@ async function salvarTriagem(event) {
         classificacao_risco: document.getElementById('classificacaoManual').value,
         queixa_principal: document.getElementById('queixa_principal').value,
         historico_breve: document.getElementById('historico_breve').value,
-        alergias: document.getElementById('alergias').value,
+        alergias: document.getElementById('alergias').value, // Modificado para <input>
         sinais_vitais: {
             pressao_arterial: document.getElementById('pressao_arterial').value || null,
             frequencia_cardiaca: parseInt(document.getElementById('frequencia_cardiaca').value) || null,
@@ -472,6 +481,7 @@ async function carregarItensPrescricao() {
     itens.forEach(item => select.innerHTML += `<option value="${item.sal_codigo}">${item.nome_produto}</option>`);
 }
 
+// --- FUNÇÃO MODIFICADA (2/2) ---
 async function adicionarPrescricao(event) {
     event.preventDefault();
     if (!ATENDIMENTO_ID_ATUAL) return;
@@ -486,14 +496,28 @@ async function adicionarPrescricao(event) {
         observacoes: document.getElementById('prescricaoObs').value,
     };
     
-    await fetch(`/api/medico/atendimento/${ATENDIMENTO_ID_ATUAL}/prescrever`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dados)
-    });
-    
-    document.getElementById('formPrescricao').reset();
-    carregarPrescricoes(ATENDIMENTO_ID_ATUAL); // Recarrega
+    try {
+        const response = await fetch(`/api/medico/atendimento/${ATENDIMENTO_ID_ATUAL}/prescrever`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dados)
+        });
+
+        // --- INÍCIO DA CAPTURA DE ERRO ---
+        // Se a resposta NÃO for OK (Ex: erro 400 da alergia)
+        if (!response.ok) {
+            const erro = await response.json(); // Pega a mensagem de erro do backend
+            throw new Error(erro.message); // Lança o erro
+        }
+        // --- FIM DA CAPTURA DE ERRO ---
+
+        document.getElementById('formPrescricao').reset();
+        carregarPrescricoes(ATENDIMENTO_ID_ATUAL); // Recarrega
+        
+    } catch (error) {
+        // Mostra o erro da alergia (ou qualquer outro) num alerta
+        alert(`Erro ao prescrever: ${error.message}`);
+    }
 }
 
 async function carregarPrescricoes(atendimentoId) {

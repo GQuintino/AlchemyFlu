@@ -1,15 +1,12 @@
-// routes/medico.js (AJUSTADO E SIMPLIFICADO)
+// routes/medico.js (CORRIGIDO)
 const express = require('express');
 const db = require('../db');
 const router = express.Router();
 
 // GET /api/medico/fila-espera
-// (Esta função foi AJUSTADA e SIMPLIFICADA)
+// (Esta função não muda)
 router.get('/fila-espera', async (req, res) => {
     try {
-        // Agora podemos usar INNER JOINs, pois todos os pacientes na fila
-        // já passaram pela recepção e têm um 'atendimento_id' e 'paciente_prontu'.
-        // Esta lógica agora é idêntica à do teu fluxoController original.
         const query = `
             SELECT f.senha, f.classificacao_risco, f.prioridade, 
                    TO_CHAR(f.data_hora_chegada, 'HH24:MI:SS') as hora_chegada,
@@ -32,15 +29,13 @@ router.get('/fila-espera', async (req, res) => {
 });
 
 // POST /api/medico/chamar-proximo
-// (Esta função foi AJUSTADA e SIMPLIFICADA)
+// (Esta função não muda)
 router.post('/chamar-proximo', async (req, res) => {
     const { profissional_id } = req.body;
     const client = await db.pool.connect();
     try {
-        // Esta lógica agora é muito mais simples e alinhada com teu fluxoController original.
         await client.query('BEGIN');
         
-        // 1. Encontra o próximo da fila (agora sabemos que ele tem um atendimento_id)
         const proximo = await client.query(`
             SELECT f.id, f.atendimento_id, f.senha 
             FROM fichas_pre_atendimento f
@@ -60,11 +55,7 @@ router.post('/chamar-proximo', async (req, res) => {
         }
         
         const { id: ficha_id, atendimento_id, senha } = proximo.rows[0];
-
-        // 2. Removemos o bloco "if (classificacao_risco === 'vermelho' && !atendimento_id)"
-        // porque ele não é mais necessário.
-
-        // 3. Atualiza os status
+        
         await client.query("UPDATE fichas_pre_atendimento SET status = 'em_atendimento' WHERE id = $1", [ficha_id]);
         await client.query("UPDATE atendimentos SET profissional_atendimento_id = $1, status = 'em_atendimento' WHERE id = $2", [profissional_id, atendimento_id]);
         
@@ -78,15 +69,11 @@ router.post('/chamar-proximo', async (req, res) => {
     }
 });
 
-// --- O RESTANTE DO FICHEIRO (PEP) NÃO MUDA ---
-// As funções de buscar dados, salvar SOAP, prescrever e encaminhar
-// já dependiam de um 'atendimento_id' válido.
-
 // GET /api/medico/atendimento/:id/dados-completos
+// (Esta função não muda)
 router.get('/atendimento/:id/dados-completos', async (req, res) => {
     const { id } = req.params;
     try {
-        // Esta query já estava correta
         const query = `
             SELECT 
                 p.nomereg, p.prontu, p.datanasc, p.sexo,
@@ -107,6 +94,7 @@ router.get('/atendimento/:id/dados-completos', async (req, res) => {
 });
 
 // POST /api/medico/atendimento/:id/evolucoes
+// (Esta função não muda)
 router.post('/atendimento/:id/evolucoes', async (req, res) => {
     const { id: atendimento_id } = req.params;
     const { subjetivo, objetivo, avaliacao, plano, profissional_id } = req.body;
@@ -120,6 +108,7 @@ router.post('/atendimento/:id/evolucoes', async (req, res) => {
 });
 
 // GET /api/medico/atendimento/:id/evolucoes
+// (Esta função não muda)
 router.get('/atendimento/:id/evolucoes', async (req, res) => {
     const { id: atendimento_id } = req.params;
     try {
@@ -131,29 +120,62 @@ router.get('/atendimento/:id/evolucoes', async (req, res) => {
     } catch (err) { console.error(err.message); res.status(500).send('Erro no servidor'); }
 });
 
-// POST /api/medico/atendimento/:id/prescrever
+// POST /api/medico/atendimento/:id/prescrever (CORRIGIDO)
 router.post('/atendimento/:id/prescrever', async (req, res) => {
     const { id: atendimento_id } = req.params;
+    // item_sal_codigo foi renomeado para item_sal_prescrito para corresponder ao BODY da requisição e ao DB
     const { profissional_id, item_sal_codigo, quantidade, dosagem, via, frequencia, observacoes } = req.body;
+    
+    // --- MUDANÇA 1 ---
+    // Renomeamos a variável que vai para o banco de dados
+    const item_sal_prescrito = item_sal_codigo;
+
     try {
+        // Validação de Alergia (já estava correta, verificando 'item_sal_codigo' vindo do front-end)
+        const fichaResult = await db.query(
+            `SELECT alergias FROM fichas_pre_atendimento WHERE atendimento_id = $1`,
+            [atendimento_id]
+        );
+
+        if (fichaResult.rows.length > 0 && fichaResult.rows[0].alergias) {
+            const alergiasTexto = fichaResult.rows[0].alergias.toUpperCase();
+            const alergiasArray = alergiasTexto.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+            // A variável 'item_sal_codigo' ainda contém o valor vindo do frontend (Ex: DIPIRONA_AMP_1G)
+            if (alergiasArray.includes(item_sal_codigo.toUpperCase())) {
+                return res.status(400).json({ 
+                    message: `ALERTA DE ALERGIA: Paciente alérgico a ${item_sal_codigo}. Prescrição bloqueada.` 
+                });
+            }
+        }
+        
+        // --- MUDANÇA 2 ---
+        // Alterado "item_sal_codigo" para "item_sal_prescrito" no INSERT
         const result = await db.query(
             `INSERT INTO prescricao_itens 
-             (atendimento_id, profissional_id, item_sal_codigo, quantidade_prescrita, dosagem, via_administracao, frequencia, observacoes, status) 
+             (atendimento_id, profissional_id, item_sal_prescrito, quantidade_prescrita, dosagem, via_administracao, frequencia, observacoes, status) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'PENDENTE') RETURNING *`,
-            [atendimento_id, profissional_id, item_sal_codigo, quantidade, dosagem, via, frequencia, observacoes]
+            [atendimento_id, profissional_id, item_sal_prescrito, quantidade, dosagem, via, frequencia, observacoes]
         );
         res.status(201).json(result.rows[0]);
-    } catch (err) { console.error(err.message); res.status(500).send('Erro no servidor'); }
+
+    } catch (err) { 
+        console.error(err.message); 
+        res.status(500).send('Erro no servidor ao salvar prescrição.'); 
+    }
 });
 
-// GET /api/medico/atendimento/:id/prescricoes
+
+// GET /api/medico/atendimento/:id/prescricoes (CORRIGIDO)
 router.get('/atendimento/:id/prescricoes', async (req, res) => {
     const { id: atendimento_id } = req.params;
     try {
+        // --- MUDANÇA 3 ---
+        // Alterado "pr.item_sal_codigo" para "pr.item_sal_prescrito" no JOIN
         const prescricoes = await db.query(
             `SELECT pr.*, p.nome_produto 
              FROM prescricao_itens pr
-             LEFT JOIN estoque_produtos p ON pr.item_sal_codigo = p.sal_codigo
+             LEFT JOIN estoque_produtos p ON pr.item_sal_prescrito = p.sal_codigo
              WHERE pr.atendimento_id = $1 ORDER BY pr.data_prescricao DESC`,
             [atendimento_id]
         );
@@ -163,6 +185,7 @@ router.get('/atendimento/:id/prescricoes', async (req, res) => {
 
 
 // POST /api/medico/atendimento/:id/encaminhar
+// (Esta função não muda)
 router.post('/atendimento/:id/encaminhar', async (req, res) => {
     const { id: atendimento_id } = req.params;
     const { proximo_fluxo } = req.body;
@@ -188,6 +211,7 @@ router.post('/atendimento/:id/encaminhar', async (req, res) => {
 });
 
 // GET /api/medico/farmacia/itens
+// (Esta função não muda)
 router.get('/farmacia/itens', async (req, res) => {
     try {
         const result = await db.query("SELECT sal_codigo, nome_produto FROM estoque_produtos ORDER BY nome_produto");

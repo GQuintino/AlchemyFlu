@@ -35,7 +35,10 @@
                 <h3>Queixa, Histórico e Alergias</h3>
                 <label for="queixa_principal">Queixa Principal / Duração</label><textarea id="queixa_principal" rows="2"></textarea>
                 <label for="historico_breve">Breve Histórico</label><textarea id="historico_breve" rows="2"></textarea>
-                <label for="alergias">Alergias Conhecidas</label><textarea id="alergias" rows="2" placeholder="Dipirona, Penicilina..."></textarea>
+                
+                <label for="alergias">Alergias (Usar Códigos SAL separados por vírgula)</label>
+                <input type="text" id="alergias" placeholder="Ex: DIPIRONA_AMP_1G, LOSARTANA_50MG">
+                
                 <div id="alertaSepse" class="alerta-sepse hidden"><strong>Possível SEPSE!</strong> Avaliar com urgência.</div>
                 <h3>Classificação de Risco</h3>
                 <p>Sugestão do Protocolo: <strong id="classificacaoSugerida" class="text-primary">Aguardando sinais...</strong></p>
