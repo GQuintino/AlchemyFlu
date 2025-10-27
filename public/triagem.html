@@ -1,42 +1,55 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Passo 1: Triagem Manchester</title>
-    <link rel="stylesheet" href="style.css"> </head>
+    <meta charset="UTF-8"><title>Triagem - Classificação de Risco</title><link rel="stylesheet" href="style.css">
+</head>
 <body>
-    <div class="prontuario-container">
-        <h2>Passo 1: Triagem Manchester Adaptada</h2>
-        <form action="/triagem" method="POST">
-            <div class="secao-soap">
-                <label for="nome_paciente">Nome (ou "Não Identificado"):</label>
-                <input type="text" id="nome_paciente" name="nome_paciente" required>
-            </div>
-            <div class="secao-soap">
-                <label for="sintomas">Sintomas (separados por vírgula):</label>
-                <input type="text" id="sintomas" name="sintomas" placeholder="Ex: febre, dor no peito, dor intensa">
-            </div>
-            <div class="secao-soap">
-                <label for="escala_dor">Escala de Dor (0-10):</label>
-                <input type="number" id="escala_dor" name="escala_dor" min="0" max="10" value="0">
-            </div>
-            
-            <h4>Sinais Vitais (para alerta SEPSE/INFARTO)</h4>
-            <div class="secao-soap">
-                <label for="temperatura">Temperatura (°C):</label>
-                <input type="number" step="0.1" id="temperatura" name="temperatura" placeholder="Ex: 38.5">
-            </div>
-            <div class="secao-soap">
-                <label for="freq_cardiaca">Freq. Cardíaca (bpm):</label>
-                <input type="number" id="freq_cardiaca" name="freq_cardiaca" placeholder="Ex: 110">
-            </div>
-            <div class="secao-soap">
-                <label for="pressao_sistolica">Pressão Sistólica (mmHg):</label>
-                <input type="number" id="pressao_sistolica" name="pressao_sistolica" placeholder="Ex: 95">
-            </div>
-
-            <button type="submit" class="btn-salvar">Classificar e Encaminhar</button>
-        </form>
+    <div class="container">
+        <h1>Triagem - Classificação de Risco</h1>
+        <div class="card" id="cardBuscaSenhaTriagem">
+            <h2>Chamar Paciente</h2>
+            <button class="btn-primary-full" onclick="chamarProximaTriagem()">Chamar Próxima Senha da Fila</button>
+            <hr>
+            <label for="senhaParaTriar">Ou buscar por senha específica:</label>
+            <input type="text" id="senhaParaTriar" placeholder="Digite a senha (Ex: P001)" autofocus>
+            <button onclick="buscarParaTriagem()">Buscar Senha Manualmente</button>
+            <div id="feedbackBuscaTriagem" class="feedback-area"></div>
+        </div>
+        <div class="card hidden" id="areaTriagem">
+            <h2>Triagem da Senha: <span id="senhaTriagemDisplay" class="text-primary"></span></h2>
+            <input type="hidden" id="fichaIdTriagem">
+            <form id="formTriagem">
+                <div class="form-row"><div class="form-group"><label>Triagem Pediátrica? <input type="checkbox" id="isInfantil"></label></div></div>
+                <h3>Sinais Vitais</h3>
+                <div class="form-row">
+                    <div class="form-group"><label for="pressao_arterial">PA (mmHg)</label><input type="text" id="pressao_arterial" class="vital-input" placeholder="120/80"></div>
+                    <div class="form-group"><label for="frequencia_cardiaca">FC (bpm)</label><input type="number" id="frequencia_cardiaca" class="vital-input"></div>
+                    <div class="form-group"><label for="frequencia_respiratoria">FR (rpm)</label><input type="number" id="frequencia_respiratoria" class="vital-input"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label for="temperatura">Temp (°C)</label><input type="number" step="0.1" id="temperatura" class="vital-input"></div>
+                    <div class="form-group"><label for="saturacao_o2">Sat O₂ (%)</label><input type="number" id="saturacao_o2" class="vital-input"></div>
+                    <div class="form-group"><label for="glicemia_capilar">Glicemia (mg/dL)</label><input type="number" id="glicemia_capilar" class="vital-input"></div>
+                    <div class="form-group"><label for="escala_dor">Dor (0-10)</label><input type="number" id="escala_dor" min="0" max="10" class="vital-input"></div>
+                </div>
+                <h3>Queixa, Histórico e Alergias</h3>
+                <label for="queixa_principal">Queixa Principal / Duração</label><textarea id="queixa_principal" rows="2"></textarea>
+                <label for="historico_breve">Breve Histórico</label><textarea id="historico_breve" rows="2"></textarea>
+                <label for="alergias">Alergias Conhecidas</label><textarea id="alergias" rows="2" placeholder="Dipirona, Penicilina..."></textarea>
+                <div id="alertaSepse" class="alerta-sepse hidden"><strong>Possível SEPSE!</strong> Avaliar com urgência.</div>
+                <h3>Classificação de Risco</h3>
+                <p>Sugestão do Protocolo: <strong id="classificacaoSugerida" class="text-primary">Aguardando sinais...</strong></p>
+                <label for="classificacaoManual">Classificação Final (Enfermeiro)</label>
+                <select id="classificacaoManual" required>
+                    <option value="">Selecione...</option>
+                    <option value="vermelho">Vermelho (Emergência)</option><option value="amarelo">Amarelo (Urgência)</option>
+                    <option value="verde">Verde (Pouco Urgente)</option><option value="azul">Azul (Não Urgente)</option>
+                </select>
+                <button type="submit" class="btn-primary-full">Salvar Triagem e Encaminhar</button>
+            </form>
+            <div id="feedbackTriagem" class="feedback-area"></div>
+        </div>
     </div>
+    <script src="app.js"></script>
 </body>
 </html>

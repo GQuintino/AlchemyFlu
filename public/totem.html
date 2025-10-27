@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8"><title>Totem de Atendimento</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="totem-container">
+        <img src="https://via.placeholder.com/200x80?text=Logo+Hospital" alt="Logo Hospital" class="totem-logo">
+        <h1>Bem-vindo!</h1>
+        <p class="totem-subtitle">Selecione o motivo da sua visita</p>
+        
+        <div id="fila-section">
+            <button class="totem-btn" onclick="selecionarFila('PRONTO_ATENDIMENTO')">Pronto Atendimento</button>
+            <button class="totem-btn" onclick="selecionarFila('RETIRADA_EXAMES')">Retirada de Exames</button>
+        </div>
+        
+        <div id="prioridade-section" class="hidden">
+            <h2>Você possui atendimento prioritário?</h2>
+            <select id="tipoPrioridade">
+                <option value="Nenhuma">Não, Atendimento Normal</option>
+                <option value="Idoso">Idoso (60+)</option>
+                <option value="Gestante">Gestante</option>
+                <option value="PCD">Pessoa com Deficiência (PCD)</option>
+                <option value="Cadeirante">Cadeirante / Mobilidade Reduzida</option>
+                <option value="Dor Toracica">Protocolo de Dor Torácica</option>
+            </select>
+            <button class="totem-btn-confirm" onclick="gerarSenhaTotem()">Confirmar e Gerar Senha</button>
+        </div>
+
+        <div id="feedbackTotem" class="feedback-area"></div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

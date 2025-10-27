@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Passo 3: Fila e Atendimento (PEPPS)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="cabecalho-flutuante" id="cabecalho-paciente" style="display: none;">
+        </div>
+
+    <div class="pepps-container">
+        
+        <div id="fila-sidebar">
+            <h2>Fila Médica</h2>
+            <div id="alerta-emergencia"></div>
+            <div id="fila-container">
+                <p>Carregando fila...</p>
+            </div>
+        </div>
+
+        <div id="atendimento-main">
+            <form id="form-soap" method="POST" style="display: none;">
+                <div class="prontuario-container">
+                    <h2>Atendimento (SOAP)</h2>
+                    
+                    <div class="secao-soap">
+                        <label for="soap-s">S (Subjetivo):</label>
+                        <textarea id="soap-s" name="soap_s" rows="5" placeholder="Queixa do paciente..."></textarea>
+                    </div>
+                    <div class="secao-soap">
+                        <label for="soap-o">O (Objetivo):</label>
+                        <textarea id="soap-o" name="soap_o" rows="5" placeholder="Exame físico, observações..."></textarea>
+                    </div>
+                    <div class="secao-soap">
+                        <label for="soap-a">A (Avaliação):</label>
+                        <textarea id="soap-a" name="soap_a" rows="5" placeholder="Hipóteses diagnósticas, CID..."></textarea>
+                    </div>
+                    <div class="secao-soap">
+                        <label for="soap-p">P (Plano):</label>
+                        <textarea id="soap-p" name="soap_p" rows="8" placeholder="Plano terapêutico, exames, encaminhamentos..."></textarea>
+                    </div>
+
+                    <div class="secao-prescricao">
+                        <h3>Prescrição (Simples)</h3>
+                        <label for="sal_prescrito">Item (Código SAL):</label>
+                        <input type="text" id="sal_prescrito" name="sal_prescrito" placeholder="Ex: DIPIRONA_EV_1G">
+                        <label for="qtd_prescrita">Quantidade:</label>
+                        <input type="number" id="qtd_prescrita" name="qtd_prescrita" value="1" min="1">
+                    </div>
+
+                    <button type="submit" class="btn-salvar">Salvar e Concluir Atendimento</button>
+                </div>
+            </form>
+            <div id="atendimento-placeholder">
+                <h3>Selecione um paciente da fila para iniciar o atendimento.</h3>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cabecalhoEl = document.getElementById('cabecalho-paciente');
+        const formSoapEl = document.getElementById('form-soap');
+        const placeholderEl = document.getElementById('atendimento-placeholder');
+        let idAtendimentoAtual = null;
+
+        // Verifica alertas de emergência na URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const alerta = urlParams.get('alerta');
+        if (alerta) {
+            document.getElementById('alerta-emergencia').innerHTML = 
+                `<h3 style="color: red;">ALERTA DE ${alerta} PARA ${urlParams.get('nome')} NA FILA!</h3>`;
+        }
+
+        // Função 1: Carregar a Fila
+        async function carregarFila() {
+            const response = await fetch('/api/fila-medica');
+            const fila = await response.json();
+            const container = document.getElementById('fila-container');
+            container.innerHTML = '';
+
+            if (fila.length === 0) {
+                container.innerHTML = '<p>Nenhum paciente na fila.</p>';
+                return;
+            }
+
+            fila.forEach(atendimento => {
+                const item = document.createElement('div');
+                item.className = `fila-item ${atendimento.classificacao_risco}`;
+                const horario = new Date(atendimento.horario_chegada).toLocaleTimeString('pt-BR');
+                
+                item.innerHTML = `
+                    <h3>${atendimento.nomereg} (Prontu: ${atendimento.prontu || 'N/A'})</h3>
+                    <p>Classificação: <strong>${atendimento.classificacao_risco}</strong> | Chegada: ${horario}</p>
+                    <button class="btn-chamar" onclick="chamarPaciente(${atendimento.id})">Chamar</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Função 2: Chamar Paciente (Cliar no botão)
+        async function chamarPaciente(id) {
+            idAtendimentoAtual = id; // Guarda o ID atual
+            
+            const response = await fetch(`/api/atendimento/${id}`);
+            if (!response.ok) {
+                alert('Erro: Atendimento não encontrado');
+                return;
+            }
+            
+            const atendimento = await response.json();
+            const paciente = atendimento; // API já retorna os dados mesclados
+
+            // Calcula idade
+            let idade = 'N/A';
+            if (paciente.datanasc) {
+                const anoNasc = new Date(paciente.datanasc).getFullYear();
+                idade = new Date().getFullYear() - anoNasc;
+            }
+
+            // Preenche o cabeçalho flutuante
+            cabecalhoEl.innerHTML = `
+                <h3>Paciente: ${paciente.nomereg} (Prontu: ${paciente.prontu})</h3>
+                <p><strong>Idade:</strong> ${idade} anos | <strong>Sexo:</strong> ${paciente.sexo} | <strong>Classificação:</strong> ${atendimento.classificacao_risco}</p>
+                <div class="sinais-vitais-mews">
+                    <strong>Sinais Vitais (Triagem):</strong> 
+                    PA: ${atendimento.sinaisVitais?.pressao_sistolica || 'N/A'} | 
+                    FC: ${atendimento.sinaisVitais?.freq_cardiaca || 'N/A'} | 
+                    Temp: ${atendimento.sinaisVitais?.temperatura || 'N/A'}
+                    <br>
+                    <strong>Score MEWS (Simulado):</strong> ${atendimento.mews_score || 'N/A'}
+                </div>
+            `;
+            
+            // Mostra o cabeçalho e o formulário, esconde o placeholder
+            cabecalhoEl.style.display = 'block';
+            formSoapEl.style.display = 'block';
+            placeholderEl.style.display = 'none';
+
+            // Limpa o formulário anterior
+            formSoapEl.reset();
+        }
+
+        // Função 3: Salvar Atendimento (Submit do formulário)
+        formSoapEl.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Impede o recarregamento da página
+            if (!idAtendimentoAtual) return;
+
+            const formData = new FormData(formSoapEl);
+            const data = Object.fromEntries(formData.entries());
+
+            const response = await fetch(`/salvar-atendimento/${idAtendimentoAtual}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const resultado = await response.json();
+            
+            if (resultado.success) {
+                alert('Atendimento salvo com sucesso!');
+                // Limpa a tela
+                idAtendimentoAtual = null;
+                cabecalhoEl.style.display = 'none';
+                formSoapEl.style.display = 'none';
+                placeholderEl.style.display = 'block';
+                // Recarrega a fila (o paciente atendido sumirá)
+                carregarFila();
+            } else {
+                alert('Erro ao salvar: ' + resultado.message);
+            }
+        });
+
+        // Carga inicial
+        carregarFila();
+        setInterval(carregarFila, 30000); // Atualiza a fila a cada 30 segundos
+    </script>
+</body>
+</html>

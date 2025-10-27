@@ -1,2 +1,2 @@
-# Ignora node_modules em qualquer nível
-**/node_modules/
+node_modules/
+.env

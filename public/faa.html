@@ -2,81 +2,66 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Passo 2: Abertura de Ficha</title>
+    <title>Passo 2: Abertura de Ficha (FAA)</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="prontuario-container">
-        <h2>Passo 2: Abertura de Ficha</h2>
+        <h2>Passo 2: Abertura de Ficha (FAA)</h2>
         <h3 id="info_triagem"></h3>
 
         <form id="form-busca" class="secao-prescricao">
-            <h4>Buscar Paciente (Simula SELECT qhos.paciente)</h4>
+            <h4>Buscar Paciente</h4>
             <label for="cpf">Buscar por CPF:</label>
-            <input type="text" id="cpf" name="cpf" placeholder="111.111.111-11">
-            
+            <input type="text" id="cpf" name="cpf">
             <label for="nome">Buscar por Nome:</label>
-            <input type="text" id="nome" name="nome" placeholder="Maria...">
-            
+            <input type="text" id="nome" name="nome">
             <label for="datanasc">Buscar por Data Nasc (AAAA-MM-DD):</label>
-            <input type="text" id="datanasc" name="datanasc" placeholder="1980-05-15">
-            
+            <input type="text" id="datanasc" name="datanasc">
             <button type="submit">Buscar Paciente</button>
         </form>
 
         <hr>
         <h4>Resultados da Busca:</h4>
-        <div id="resultados-busca">
-            </div>
+        <div id="resultados-busca"></div>
     </div>
 
     <script>
-        // Pega os dados da triagem que vieram na URL
         const urlParams = new URLSearchParams(window.location.search);
         const nomeTriagem = urlParams.get('nome');
         const classificacao = urlParams.get('classificacao');
+        const sinais_vitais_json = urlParams.get('sinais'); // Pega os sinais
 
-        // Mostra a classificação
         const infoEl = document.getElementById('info_triagem');
         if (classificacao) {
-            infoEl.innerText = `Abrir ficha para: ${nomeTriagem} (Classificação: ${classificacao})`;
-            infoEl.style.color = classificacao === 'AMARELO' ? '#f9a825' : '#007bff';
+            infoEl.innerText = `Abrir ficha para: ${nomeTriagem || 'Paciente'} (Classificação: ${classificacao})`;
         }
-
-        // Preenche o nome da busca automaticamente
         document.getElementById('nome').value = nomeTriagem;
 
-
-        // Lógica para buscar pacientes (chama a API /api/buscar-paciente)
+        // Lógica para buscar pacientes
         document.getElementById('form-busca').addEventListener('submit', async (e) => {
-            e.preventDefault(); // Impede o envio normal do formulário
-            
+            e.preventDefault();
             const formData = {
                 cpf: document.getElementById('cpf').value,
                 nome: document.getElementById('nome').value,
                 datanasc: document.getElementById('datanasc').value
             };
-
             const response = await fetch('/api/buscar-paciente', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
-            
             const pacientes = await response.json();
             exibirResultados(pacientes);
         });
 
-        // Função para mostrar os resultados na tela
         function exibirResultados(pacientes) {
             const resultadosEl = document.getElementById('resultados-busca');
-            resultadosEl.innerHTML = ''; // Limpa resultados anteriores
-
+            resultadosEl.innerHTML = '';
             if (pacientes.length === 0) {
-                resultadosEl.innerHTML = '<p>Nenhum paciente encontrado.</p>';
+                resultadosEl.innerHTML = '<p>Nenhum paciente encontrado. (Pode criar um novo?)</p>';
                 return;
             }
-
             const lista = document.createElement('ul');
             pacientes.forEach(paciente => {
                 const item = document.createElement('li');
@@ -90,18 +75,20 @@
             resultadosEl.appendChild(lista);
         }
 
-        // Função chamada pelo botão "Confirmar"
         async function abrirAtendimento(prontu) {
             const response = await fetch('/abrir-atendimento', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prontu: prontu, classificacao: classificacao })
+                body: JSON.stringify({ 
+                    prontu: prontu, 
+                    classificacao: classificacao,
+                    sinais_vitais_json: sinais_vitais_json // Envia os sinais
+                })
             });
-            
             const resultado = await response.json();
             if (resultado.success) {
                 alert('Paciente encaminhado para a fila médica!');
-                window.location.href = '/fila-medica'; // Redireciona para a fila
+                window.location.href = '/pepps.html'; // Redireciona para o PEPPS
             } else {
                 alert('Erro ao abrir atendimento: ' + resultado.message);
             }

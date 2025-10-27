@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>PEP - Prontuário e Fila</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="pepHeader" class="pep-header-flutuante hidden">
+        <div class="header-info">
+            <strong>Paciente:</strong> <span id="headerNome">--</span> | 
+            <strong>Prontuário:</strong> <span id="headerProntuario">--</span> | 
+            <strong>Idade:</strong> <span id="headerIdade">--</span>
+        </div>
+        <div class="header-vitals">
+            <strong>Alergias:</strong> <span id="headerAlergias">--</span> | 
+            <strong>Sinais Vitais (Triagem):</strong> <span id="headerSinaisVitais">--</span>
+        </div>
+        <div id="headerAlertas" class="hidden"></div>
+    </div>
+    
+    <div class="pepps-container">
+        
+        <div id="fila-sidebar">
+            <div class="card">
+                <div class="call-section">
+                    <div id="atendimentoAtual">
+                        <h3>Em atendimento:</h3>
+                        <p id="senhaEmAtendimento" class="current-call">--</p>
+                    </div>
+                    <button id="btnChamarProximoMedico">Chamar Próximo</button>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Pacientes Aguardando</h2>
+                <table id="tabelaFilaEspera">
+                    <thead>
+                        <tr><th>Senha</th><th>Risco</th><th>Nome</th><th>Chegada</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="atendimento-main">
+            <div id="atendimento-placeholder">
+                <h3>Selecione um paciente da fila ou clique em "Chamar Próximo".</h3>
+            </div>
+            
+            <div id="pep-content" class="hidden">
+                <div class="card">
+                    <h3>Evolução Clínica (SOAP)</h3>
+                    <form id="formSOAP">
+                        <label>Subjetivo</label><textarea id="subjetivo" rows="2"></textarea>
+                        <label>Objetivo</label><textarea id="objetivo" rows="2"></textarea>
+                        <label>Avaliação</label><textarea id="avaliacao" rows="3"></textarea>
+                        <label>Plano</label><textarea id="plano" rows="3"></textarea>
+                        <button type="submit" class="btn-small">Salvar Evolução</button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h3>Linha do Tempo (Evoluções)</h3>
+                    <div id="linhaDoTempo"></div>
+                </div>
+
+                <div class="card">
+                    <h3>Prescrição</h3>
+                    <form id="formPrescricao">
+                        <label>Item (SAL)</label>
+                        <select id="prescricaoItem"></select>
+                        <label>Qtd</label><input type="number" id="prescricaoQtd" value="1">
+                        <label>Dosagem</label><input type="text" id="prescricaoDosagem" placeholder="ex: 500mg">
+                        <label>Via</label><input type="text" id="prescricaoVia" placeholder="ex: IV, VO">
+                        <label>Frequência</label><input type="text" id="prescricaoFrequencia" placeholder="ex: 8/8h">
+                        <label>Observações</label><input type="text" id="prescricaoObs" placeholder="se necessário">
+                        <button type="submit" class="btn-small">Adicionar Prescrição</button>
+                    </form>
+                    <ul id="listaPrescricao"></ul>
+                </div>
+
+                <div class="card">
+                    <h3>Encaminhamento do Paciente</h3>
+                    <div id="feedbackEncaminhamento" class="feedback-area"></div>
+                    <div class="encaminhamento-buttons">
+                        <button onclick="encaminhar('medicacao')">Medicação</button>
+                        <button onclick="encaminhar('reavaliacao')">Reavaliação</button>
+                        <button onclick="encaminhar('internacao')">Internação</button>
+                        <button onclick="encaminhar('alta')" class="btn-secondary">Alta</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

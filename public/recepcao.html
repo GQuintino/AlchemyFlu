@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8"><title>Recepção - Abertura de Ficha</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Recepção - Formalização do Atendimento</h1>
+        
+        <div class="card" id="cardBuscaSenha">
+            <h2>1. Chamar Paciente da Fila (Triagem)</h2>
+            <button class="btn-primary-full" onclick="chamarProximaRecepcao()">Chamar Próxima Senha</button>
+            <hr>
+            <form id="formBuscaSenha">
+                <label for="buscaSenha">Ou buscar por senha específica:</label>
+                <input type="text" id="buscaSenha" placeholder="Digite a senha (Ex: G001)" required>
+                <button type="submit">Buscar Ficha Manualmente</button>
+            </form>
+            <hr>
+            <button class="btn-secondary btn-primary-full" onclick="iniciarAtendimentoSemSenha()">Abrir Atendimento Eletivo (Sem Senha)</button>
+            <div id="feedbackBuscaSenha" class="feedback-area"></div>
+        </div>
+        
+        <div id="areaFormalizacao" class="hidden">
+            <div class="card">
+                <h2>2. Identificação do Paciente</h2>
+                <p><strong>Senha:</strong> <span id="senhaDoPaciente" class="text-primary"></span> | <strong>Classificação:</strong> <span id="riscoDoPaciente"></span></p>
+                <input type="hidden" id="fichaId">
+                
+                <form id="formBuscaPaciente">
+                    <div class="form-row">
+                        <div class="form-group"><label for="buscaCpf">CPF</label><input type="text" id="buscaCpf" placeholder="Buscar por CPF"></div>
+                        <div class="form-group"><label for="buscaNome">Nome</label><input type="text" id="buscaNome" placeholder="Buscar por Nome"></div>
+                        <div class="form-group"><label for="buscaDataNasc">Data Nasc.</label><input type="date" id="buscaDataNasc"></div>
+                    </div>
+                    <button type="submit">Buscar Paciente</button>
+                </form>
+                
+                <div id="resultadoBuscaPaciente" class="feedback-area"></div>
+                 <table id="tabelaResultadosRecepcao" class="hidden"><thead><tr><th>Prontuário</th><th>Nome</th><th>Ação</th></tr></thead><tbody></tbody></table>
+            </div>
+            
+            <div class="card hidden" id="cardAbertura">
+                <h2>3. Abertura da Ficha</h2>
+                <h3 id="nomePacienteAdmissao"></h3>
+                <form id="formAbertura">
+                    <input type="hidden" id="pacienteProntu">
+                    <label for="tipoAtendimento">Modalidade</label>
+                    <select id="tipoAtendimento" required>
+                        <option value="Pronto Atendimento">Pronto Atendimento</option>
+                        <option value="Ambulatório">Ambulatório (Eletivo)</option>
+                        </select>
+                    <label for="setorDestino">Setor de Destino</label><select id="setorDestino" required></select>
+                    <button type="submit">Finalizar e Imprimir FAA</button>
+                </form>
+                <div id="feedbackAbertura" class="feedback-area"></div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
