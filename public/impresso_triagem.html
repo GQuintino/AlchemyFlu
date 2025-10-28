@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8"><title>Impresso da Triagem</title>
+    <link rel="stylesheet" href="print.css">
+</head>
+<body>
+    <div class="container-impresso">
+        <div class="header-impresso">
+            <div class="header-logo">Hospital AlchemyFlu</div>
+            <div class="header-titulo">FICHA DE TRIAGEM</div>
+        </div>
+
+        <h1>Dados do Atendimento</h1>
+        <div class="campo-grupo">
+            <div class="campo-inline">
+                <span class="campo-label">Senha</span>
+                <span class="campo-valor" id="senha"></span>
+            </div>
+            <div class="campo-inline">
+                <span class="campo-label">Classificação de Risco</span>
+                <span class="campo-valor" id="classificacao_risco"></span>
+            </div>
+        </div>
+
+        <h2>Sinais Vitais</h2>
+        <div class="campo-grupo">
+            <div class="campo-inline"><span class="campo-label">PA</span><span class="campo-valor" id="pressao_arterial"></span></div>
+            <div class="campo-inline"><span class="campo-label">FC (bpm)</span><span class="campo-valor" id="frequencia_cardiaca"></span></div>
+            <div class="campo-inline"><span class="campo-label">FR (rpm)</span><span class="campo-valor" id="frequencia_respiratoria"></span></div>
+            <div class="campo-inline"><span class="campo-label">Temp (°C)</span><span class="campo-valor" id="temperatura"></span></div>
+            <div class="campo-inline"><span class="campo-label">Sat O₂ (%)</span><span class="campo-valor" id="saturacao_o2"></span></div>
+            <div class="campo-inline"><span class="campo-label">Dor (0-10)</span><span class="campo-valor" id="escala_dor"></span></div>
+        </div>
+        
+        <h2>Queixa e Alergias</h2>
+        <div class="campo-grupo">
+            <span class="campo-label">Queixa Principal</span>
+            <span class="campo-valor" id="queixa_principal"></span>
+        </div>
+        <div class="campo-grupo">
+            <span class="campo-label">Histórico Breve</span>
+            <span class="campo-valor" id="historico_breve"></span>
+        </div>
+        <div class="campo-grupo">
+            <span class="campo-label">Alergias (SAL)</span>
+            <span class="campo-valor" id="alergias"></span>
+        </div>
+
+        <div class="area-assinatura">
+            <div class="linha-assinatura"></div>
+            <span class="nome-profissional">Enfermeiro(a) da Triagem</span>
+        </div>
+        
+        <button id="btnImprimir" onclick="window.print()" style="width: 100%; padding: 15px; font-size: 1.2em; margin-top: 20px;">Imprimir</button>
+    </div>
+
+    <script>
+        // JS simples para carregar os dados
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const fichaId = params.get('id');
+            
+            if (!fichaId) {
+                document.body.innerHTML = "<h1>Erro: ID da ficha não fornecido.</h1>";
+                return;
+            }
+
+            try {
+                // Esta rota será criada no passo seguinte
+                const response = await fetch(`/api/triagem/impresso/${fichaId}`);
+                if (!response.ok) throw new Error('Falha ao carregar dados da ficha.');
+                const dados = await response.json();
+
+                // Preenche os campos
+                document.getElementById('senha').textContent = dados.senha;
+                document.getElementById('classificacao_risco').textContent = dados.classificacao_risco.toUpperCase();
+                document.getElementById('queixa_principal').textContent = dados.queixa_principal;
+                document.getElementById('historico_breve').textContent = dados.historico_breve;
+                document.getElementById('alergias').textContent = dados.alergias || 'Nenhuma';
+
+                // Sinais Vitais (se existirem)
+                if (dados.sv) {
+                    document.getElementById('pressao_arterial').textContent = dados.sv.pressao_arterial || '--';
+                    document.getElementById('frequencia_cardiaca').textContent = dados.sv.frequencia_cardiaca || '--';
+                    document.getElementById('frequencia_respiratoria').textContent = dados.sv.frequencia_respiratoria || '--';
+                    document.getElementById('temperatura').textContent = dados.sv.temperatura || '--';
+                    document.getElementById('saturacao_o2').textContent = dados.sv.saturacao_o2 || '--';
+                    document.getElementById('escala_dor').textContent = dados.sv.escala_dor || '--';
+                }
+
+                // Dispara a impressão automaticamente
+                window.print();
+
+            } catch (err) {
+                document.body.innerHTML = `<h1>Erro ao carregar dados: ${err.message}</h1>`;
+            }
+        });
+    </script>
+</body>
+</html>

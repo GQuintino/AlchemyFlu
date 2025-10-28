@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8"><title>Impresso - FAA</title>
+    <link rel="stylesheet" href="print.css">
+</head>
+<body>
+    <div class="container-impresso">
+        <div class="header-impresso">
+            <div class="header-logo">Hospital AlchemyFlu</div>
+            <div class="header-titulo">FICHA DE ATENDIMENTO (FAA)</div>
+        </div>
+
+        <h1>Identificação do Paciente</h1>
+        <div class="campo-grupo">
+            <div class="campo-inline" style="width: 70%;">
+                <span class="campo-label">Nome</span>
+                <span class="campo-valor" id="nome"></span>
+            </div>
+            <div class="campo-inline" style="width: 25%;">
+                <span class="campo-label">Prontuário</span>
+                <span class="campo-valor" id="prontuario"></span>
+            </div>
+        </div>
+        <div class="campo-grupo">
+            <div class="campo-inline"><span class="campo-label">Data Nasc.</span><span class="campo-valor" id="datanasc"></span></div>
+            <div class="campo-inline"><span class="campo-label">Idade</span><span class="campo-valor" id="idade"></span></div>
+            <div class="campo-inline"><span class="campo-label">Sexo</span><span class="campo-valor" id="sexo"></span></div>
+            <div class="campo-inline"><span class="campo-label">CPF</span><span class="campo-valor" id="cpf"></span></div>
+        </div>
+        
+        <h2>Dados da Admissão</h2>
+        <div class="campo-grupo">
+            <div class="campo-inline"><span class="campo-label">Nº Atendimento</span><span class="campo-valor" id="atendimento_id"></span></div>
+            <div class="campo-inline"><span class="campo-label">Data/Hora Chegada</span><span class="campo-valor" id="data_chegada"></span></div>
+            <div class="campo-inline"><span class="campo-label">Modalidade</span><span class="campo-valor" id="tipo_atendimento"></span></div>
+            <div class="campo-inline"><span class="campo-label">Setor Destino</span><span class="campo-valor" id="setor_destino"></span></div>
+        </div>
+
+        <h2>Dados da Triagem</h2>
+         <div class="campo-grupo">
+            <div class="campo-inline"><span class="campo-label">Senha</span><span class="campo-valor" id="senha"></span></div>
+            <div class="campo-inline"><span class="campo-label">Classificação de Risco</span><span class="campo-valor" id="classificacao_risco"></span></div>
+            <div class="campo-inline" style="width: 100%"><span class="campo-label">Queixa</span><span class="campo-valor" id="queixa"></span></div>
+        </div>
+        
+        <div class="area-assinatura">
+            <div class="linha-assinatura"></div>
+            <span class="nome-profissional">Rececionista</span>
+        </div>
+        
+        <button id="btnImprimir" onclick="window.print()" style="width: 100%; padding: 15px; font-size: 1.2em; margin-top: 20px;">Imprimir</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const atendimentoId = params.get('id');
+            
+            if (!atendimentoId) {
+                document.body.innerHTML = "<h1>Erro: ID do atendimento não fornecido.</h1>";
+                return;
+            }
+
+            try {
+                // Esta rota será criada no passo seguinte
+                const response = await fetch(`/api/recepcao/impresso/${atendimentoId}`);
+                if (!response.ok) throw new Error('Falha ao carregar dados da FAA.');
+                const dados = await response.json();
+
+                // Preenche os campos
+                document.getElementById('nome').textContent = dados.p.nomereg;
+                document.getElementById('prontuario').textContent = dados.p.prontu;
+                document.getElementById('datanasc').textContent = dados.p.datanasc_formatada;
+                document.getElementById('idade').textContent = dados.p.idade + ' anos';
+                document.getElementById('sexo').textContent = dados.p.sexo;
+                document.getElementById('cpf').textContent = dados.p.cpf || '--';
+
+                document.getElementById('atendimento_id').textContent = dados.a.id;
+                document.getElementById('tipo_atendimento').textContent = dados.a.tipo_atendimento;
+                document.getElementById('setor_destino').textContent = dados.a.setor_destino;
+                
+                // Dados da Ficha (se existir)
+                if (dados.f) {
+                    document.getElementById('data_chegada').textContent = dados.f.data_chegada_formatada;
+                    document.getElementById('senha').textContent = dados.f.senha;
+                    document.getElementById('classificacao_risco').textContent = dados.f.classificacao_risco;
+                    document.getElementById('queixa').textContent = dados.f.queixa_principal;
+                } else {
+                     document.getElementById('data_chegada').textContent = dados.a.data_abertura_formatada;
+                }
+                
+                window.print();
+
+            } catch (err) {
+                document.body.innerHTML = `<h1>Erro ao carregar dados: ${err.message}</h1>`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -56,7 +56,12 @@
                         <label>Objetivo</label><textarea id="objetivo" rows="2"></textarea>
                         <label>Avaliação</label><textarea id="avaliacao" rows="3"></textarea>
                         <label>Plano</label><textarea id="plano" rows="3"></textarea>
-                        <button type="submit" class="btn-small">Salvar Evolução</button>
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button type="submit" class="btn-small" style="flex: 1;">Salvar Evolução</button>
+                            <button type="button" onclick="imprimirPEP()" class="btn-secondary btn-small" style="flex: 1;">Imprimir PEP</button>
+                        </div>
+                        
                     </form>
                 </div>
                 

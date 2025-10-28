@@ -87,4 +87,38 @@ router.post('/salvar/:ficha_id', async (req, res) => {
     }
 });
 
+// --- ROTA NOVA PARA IMPRESSÃO ---
+router.get('/impresso/:ficha_id', async (req, res) => {
+    const { ficha_id } = req.params;
+    try {
+        // 1. Busca dados da ficha principal
+        const fichaQuery = `
+            SELECT senha, classificacao_risco, queixa_principal, historico_breve, alergias
+            FROM fichas_pre_atendimento
+            WHERE id = $1
+        `;
+        const fichaResult = await db.query(fichaQuery, [ficha_id]);
+        if (fichaResult.rows.length === 0) {
+            return res.status(404).json({ message: "Ficha não encontrada." });
+        }
+        
+        // 2. Busca Sinais Vitais
+        const svQuery = `SELECT * FROM sinais_vitais_triagem WHERE ficha_id = $1`;
+        const svResult = await db.query(svQuery, [ficha_id]);
+        
+        // 3. Combina os resultados
+        const dadosCompletos = {
+            ...fichaResult.rows[0],
+            sv: svResult.rows.length > 0 ? svResult.rows[0] : null
+        };
+        
+        res.json(dadosCompletos);
+        
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Erro no servidor ao buscar dados para impressão.');
+    }
+});
+
+
 module.exports = router;

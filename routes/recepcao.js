@@ -128,4 +128,47 @@ router.get('/setores', (req, res) => {
     res.json(['Pronto Socorro Adulto', 'Pronto Socorro Infantil', 'Ambulatório de Ortopedia', 'Ambulatório de Cardiologia', 'Pequena Cirurgia', 'Internação Clínica', 'Internação Cirúrgica']);
 });
 
+router.get('/impresso/:atendimento_id', async (req, res) => {
+    const { atendimento_id } = req.params;
+    try {
+        // 1. Busca Atendimento
+        const queryA = `
+            SELECT id, paciente_prontu, tipo_atendimento, setor_destino, 
+                   TO_CHAR(data_abertura, 'DD/MM/YYYY HH24:MI') as data_abertura_formatada
+            FROM atendimentos WHERE id = $1
+        `;
+        const resA = await db.query(queryA, [atendimento_id]);
+        if (resA.rows.length === 0) return res.status(404).json({ message: "Atendimento não encontrado." });
+        
+        const atendimento = resA.rows[0];
+        
+        // 2. Busca Paciente
+        const queryP = `
+            SELECT prontu, nomereg, cpf, sexo, 
+                   TO_CHAR(datanasc, 'DD/MM/YYYY') as datanasc_formatada,
+                   DATE_PART('year', AGE(datanasc)) as idade
+            FROM qhos.paciente WHERE prontu = $1
+        `;
+        const resP = await db.query(queryP, [atendimento.paciente_prontu]);
+        
+        // 3. Busca Ficha (pode não existir em caso de eletivo)
+        const queryF = `
+            SELECT senha, classificacao_risco, queixa_principal, 
+                   TO_CHAR(data_hora_chegada, 'DD/MM/YYYY HH24:MI') as data_chegada_formatada
+            FROM fichas_pre_atendimento WHERE atendimento_id = $1
+        `;
+        const resF = await db.query(queryF, [atendimento_id]);
+
+        res.json({
+            a: atendimento,
+            p: resP.rows.length > 0 ? resP.rows[0] : null,
+            f: resF.rows.length > 0 ? resF.rows[0] : null
+        });
+        
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Erro no servidor ao buscar dados para FAA.');
+    }
+});
+
 module.exports = router;

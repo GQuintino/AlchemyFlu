@@ -1,0 +1,112 @@
+/* public/print.css */
+/* Este CSS formata as páginas para impressão */
+
+body {
+    font-family: Arial, sans-serif;
+    color: #000;
+    background-color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+.container-impresso {
+    width: 90%;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+h1, h2, h3 {
+    color: #000;
+    border-bottom: 2px solid #000;
+    padding-bottom: 5px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+h1 { font-size: 24px; text-align: center; }
+h2 { font-size: 20px; }
+h3 { font-size: 16px; border-bottom-width: 1px; }
+
+/* Layout de campos */
+.campo-grupo {
+    margin-bottom: 15px;
+    border: 1px solid #eee;
+    padding: 10px;
+}
+.campo-label {
+    font-weight: bold;
+    color: #333;
+    display: block;
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+.campo-valor {
+    font-size: 16px;
+    min-height: 20px; /* Garante espaço para assinatura */
+    padding-bottom: 5px;
+    border-bottom: 1px dotted #999;
+}
+
+.campo-inline {
+    display: inline-block;
+    width: 48%; /* Duas colunas */
+    vertical-align: top;
+}
+
+/* Header do impresso */
+.header-impresso {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 10px;
+}
+.header-logo {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+.header-titulo {
+    font-size: 1.5em;
+    font-weight: bold;
+    text-align: right;
+}
+
+/* Assinatura */
+.area-assinatura {
+    margin-top: 60px;
+    text-align: center;
+}
+.linha-assinatura {
+    border-bottom: 1px solid #000;
+    width: 300px;
+    margin: 0 auto 5px auto;
+}
+.nome-profissional {
+    font-size: 14px;
+}
+
+/* Regras específicas de impressão */
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    .container-impresso {
+        width: 100%;
+        margin: 0;
+        border: none;
+        box-shadow: none;
+    }
+    
+    /* Esconde o botão de imprimir que adicionamos nos HTMLs */
+    #btnImprimir {
+        display: none;
+    }
+
+    /* Evita quebras de página indesejadas */
+    .campo-grupo, .evolucao-item {
+        page-break-inside: avoid;
+    }
+}

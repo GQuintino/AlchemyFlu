@@ -70,13 +70,12 @@ function initTriagem() {
     document.querySelector('button[onclick="buscarParaTriagem()"]').addEventListener('click', buscarParaTriagem);
     document.getElementById('formTriagem').addEventListener('submit', salvarTriagem);
     
-    // Listener para sugestão de classificação (lógica da tua triagem.html)
+    // Listener para sugestão de classificação
     document.querySelectorAll('.vital-input').forEach(input => {
         input.addEventListener('input', sugerirClassificacao);
     });
 }
 
-// --- FUNÇÃO MODIFICADA (1/2) ---
 function sugerirClassificacao() {
     const fc = parseInt(document.getElementById('frequencia_cardiaca').value) || 0;
     const fr = parseInt(document.getElementById('frequencia_respiratoria').value) || 0;
@@ -87,22 +86,21 @@ function sugerirClassificacao() {
     const sugerida = document.getElementById('classificacaoSugerida');
     const selectManual = document.getElementById('classificacaoManual');
     
-    // Lógica de sugestão (simplificada da tua)
     if (fc > 140 || fr > 35 || sat < 90 || dor >= 8) {
         sugerida.textContent = 'VERMELHO';
-        sugerida.className = 'risk-vermelho'; // Muda a cor
+        sugerida.className = 'risk-vermelho';
         selectManual.value = 'vermelho';
     } else if (fc > 120 || fr > 28 || sat < 95 || dor >= 6 || temp > 38.5) {
         sugerida.textContent = 'AMARELO';
-        sugerida.className = 'risk-amarelo'; // Muda a cor
+        sugerida.className = 'risk-amarelo';
         selectManual.value = 'amarelo';
     } else if (dor > 0 || temp > 37.5) {
         sugerida.textContent = 'VERDE';
-        sugerida.className = 'risk-verde'; // Muda a cor
+        sugerida.className = 'risk-verde';
         selectManual.value = 'verde';
     } else {
         sugerida.textContent = 'AZUL';
-        sugerida.className = 'risk-azul'; // Muda a cor
+        sugerida.className = 'risk-azul';
         selectManual.value = 'azul';
     }
 }
@@ -115,7 +113,7 @@ async function chamarProximaTriagem() {
         if (!response.ok) { const err = await response.json(); throw new Error(err.message); }
         const ficha = await response.json();
         document.getElementById('senhaParaTriar').value = ficha.senha;
-        buscarParaTriagem(); // Chama a busca automaticamente
+        buscarParaTriagem(); 
     } catch (error) { feedback.textContent = error.message; }
 }
 
@@ -138,17 +136,17 @@ async function buscarParaTriagem() {
     }
 }
 
+// --- FUNÇÃO MODIFICADA (Gatilho Impressão Triagem) ---
 async function salvarTriagem(event) {
     event.preventDefault();
     const ficha_id = document.getElementById('fichaIdTriagem').value;
     const feedback = document.getElementById('feedbackTriagem');
     
-    // Coleta os dados do formulário
     const dados = {
         classificacao_risco: document.getElementById('classificacaoManual').value,
         queixa_principal: document.getElementById('queixa_principal').value,
         historico_breve: document.getElementById('historico_breve').value,
-        alergias: document.getElementById('alergias').value, // Modificado para <input>
+        alergias: document.getElementById('alergias').value,
         sinais_vitais: {
             pressao_arterial: document.getElementById('pressao_arterial').value || null,
             frequencia_cardiaca: parseInt(document.getElementById('frequencia_cardiaca').value) || null,
@@ -168,7 +166,11 @@ async function salvarTriagem(event) {
         });
         if (!response.ok) throw new Error('Falha ao salvar triagem.');
         const result = await response.json();
-        // Ajustado para o novo fluxo: todos vão para recepção
+        
+        // --- MUDANÇA AQUI: GATILHO DA IMPRESSÃO ---
+        window.open(`/impresso_triagem.html?id=${ficha_id}`, '_blank', 'width=800,height=600');
+        // --- FIM DA MUDANÇA ---
+        
         feedback.innerHTML = `<p style="color:green">Triagem salva! Próximo passo: ${result.proximo_passo.replace(/_/g, ' ')}.</p><br/><button onclick="window.location.reload()">Nova Triagem</button>`;
         document.getElementById('formTriagem').classList.add('hidden');
     } catch(error) {
@@ -179,13 +181,10 @@ async function salvarTriagem(event) {
 
 // --- MÓDULO RECEPÇÃO ---
 function initRecepcao() {
-    // Adiciona os 'listeners' que o teu HTML espera
     document.querySelector('button[onclick="chamarProximaRecepcao()"]').addEventListener('click', chamarProximaRecepcao);
     document.getElementById('formBuscaSenha').addEventListener('submit', buscarParaRecepcao);
     document.getElementById('formBuscaPaciente').addEventListener('submit', buscarPacienteRecepcao);
     document.getElementById('formAbertura').addEventListener('submit', formalizarAtendimento);
-    
-    // Listener para o NOVO botão de atendimento eletivo
     document.querySelector('button[onclick="iniciarAtendimentoSemSenha()"]').addEventListener('click', iniciarAtendimentoSemSenha);
     
     carregarDropdownsRecepcao();
@@ -217,37 +216,22 @@ async function buscarParaRecepcao(event) {
 }
 
 function exibirFichaParaFormalizar(ficha) {
-    // Preenche os dados da ficha
     document.getElementById('fichaId').value = ficha.id;
     document.getElementById('senhaDoPaciente').textContent = ficha.senha;
     document.getElementById('riscoDoPaciente').textContent = ficha.classificacao_risco;
-    
-    // Mostra a área de busca de paciente
     document.getElementById('areaFormalizacao').classList.remove('hidden');
-    // Esconde a área de chamada
     document.getElementById('cardBuscaSenha').classList.add('hidden');
-    
-    // Pré-seleciona o tipo de atendimento
     document.getElementById('tipoAtendimento').value = 'Pronto Atendimento';
 }
 
-// --- NOVA FUNÇÃO (Adicionada na última etapa) ---
 function iniciarAtendimentoSemSenha() {
-    // 1. Limpa dados da ficha anterior
-    document.getElementById('fichaId').value = ''; // Ficha ID fica em branco
+    document.getElementById('fichaId').value = '';
     document.getElementById('senhaDoPaciente').textContent = 'N/A (Atendimento Eletivo)';
     document.getElementById('riscoDoPaciente').textContent = 'N/A';
-
-    // 2. Mostra a área de busca de paciente
     document.getElementById('areaFormalizacao').classList.remove('hidden');
-    
-    // 3. Esconde a área de chamada
     document.getElementById('cardBuscaSenha').classList.add('hidden');
-
-    // 4. Pré-seleciona o tipo de atendimento para "Ambulatório"
     document.getElementById('tipoAtendimento').value = 'Ambulatório';
 }
-// --- FIM DA NOVA FUNÇÃO ---
 
 async function buscarPacienteRecepcao(event) {
     event.preventDefault();
@@ -272,7 +256,6 @@ async function buscarPacienteRecepcao(event) {
             tbody.innerHTML = '<tr><td colspan="3">Nenhum paciente encontrado.</td></tr>';
         } else {
             pacientes.forEach(p => {
-                // Adiciona o 'onclick' como no teu HTML original
                 tbody.innerHTML += `<tr>
                     <td>${p.prontu}</td>
                     <td>${p.nomereg}</td>
@@ -291,24 +274,22 @@ function selecionarPacienteRecepcao(prontu, nome) {
 }
 
 async function carregarDropdownsRecepcao() {
-    // Carrega os setores da nossa nova API
     const setores = await fetch('/api/recepcao/setores').then(res => res.json());
     const setorSelect = document.getElementById('setorDestino');
     
-    // Adiciona as opções de atendimento (agora com Ambulatório)
     if (!document.querySelector('#tipoAtendimento option[value="Ambulatório"]')) {
         document.getElementById('tipoAtendimento').innerHTML += '<option value="Ambulatório">Ambulatório (Eletivo)</option>';
     }
-    // Carrega setores
     setores.forEach(s => setorSelect.innerHTML += `<option value="${s}">${s}</option>`);
     setorSelect.value = 'Pronto Socorro Adulto';
 }
 
+// --- FUNÇÃO MODIFICADA (Gatilho Impressão FAA) ---
 async function formalizarAtendimento(event) {
     event.preventDefault();
     const feedback = document.getElementById('feedbackAbertura');
     const dados = {
-        ficha_id: document.getElementById('fichaId').value, // Estará em branco se for "sem senha"
+        ficha_id: document.getElementById('fichaId').value, 
         paciente_prontu: document.getElementById('pacienteProntu').value,
         tipo_atendimento: document.getElementById('tipoAtendimento').value,
         setor_destino: document.getElementById('setorDestino').value
@@ -320,9 +301,18 @@ async function formalizarAtendimento(event) {
             body: JSON.stringify(dados)
         });
         if (!response.ok) throw new Error('Erro ao formalizar.');
+        
+        const result = await response.json(); // Pega o resultado com o ID
+
+        // --- MUDANÇA AQUI: GATILHO DA IMPRESSÃO ---
+        window.open(`/impresso_faa.html?id=${result.atendimento_id}`, '_blank', 'width=800,height=600');
+        // --- FIM DA MUDANÇA ---
+
         feedback.innerHTML = `<p style="color:green">Atendimento formalizado! Paciente na fila médica.</p><br/><button onclick="window.location.reload()">Nova Recepção</button>`;
         document.getElementById('areaFormalizacao').classList.add('hidden');
-    } catch(error) { feedback.textContent = error.message; }
+    } catch(error) {
+        feedback.textContent = error.message;
+    }
 }
 
 
@@ -344,7 +334,7 @@ function initMedico() {
     atualizarFilaDeEspera();
     setInterval(atualizarFilaDeEspera, 20000); // Atualiza fila
     
-    // Verifica se a URL tem um ID (quando o médico clica na notificação)
+    // Verifica se a URL tem um ID
     const urlParams = new URLSearchParams(window.location.search);
     const atendimentoIdUrl = urlParams.get('atendimento_id');
     if (atendimentoIdUrl) {
@@ -366,7 +356,6 @@ async function atualizarFilaDeEspera() {
             <td>${p.nome_paciente || (p.classificacao_risco === 'vermelho' ? 'EMERGÊNCIA' : '...')}</td>
             <td>${p.hora_chegada}</td>
         `;
-        // Adiciona 'onclick' para carregar o paciente se ele já tiver um atendimento_id
         if (p.atendimento_id) {
             tr.onclick = () => carregarAtendimento(p.atendimento_id, p.senha);
         }
@@ -384,10 +373,9 @@ async function chamarProximoMedico() {
         if (!response.ok) { const err = await response.json(); throw new Error(err.message); }
         const result = await response.json();
         
-        // Atualiza a UI
         document.getElementById('senhaEmAtendimento').textContent = result.senha_chamada;
-        atualizarFilaDeEspera(); // Remove o paciente da fila
-        carregarAtendimento(result.atendimento_id, result.senha_chamada); // Carrega o PEP
+        atualizarFilaDeEspera(); 
+        carregarAtendimento(result.atendimento_id, result.senha_chamada);
         
     } catch(error) { alert(error.message); }
 }
@@ -395,7 +383,7 @@ async function chamarProximoMedico() {
 async function carregarAtendimento(atendimentoId, senha = '--') {
     ATENDIMENTO_ID_ATUAL = atendimentoId;
     
-    // 1. Mostra o PEP, esconde o placeholder
+    // 1. Mostra o PEP
     window.pepHeader.classList.remove('hidden');
     window.pepContent.classList.remove('hidden');
     window.placeholder.classList.add('hidden');
@@ -477,11 +465,9 @@ async function carregarItensPrescricao() {
     const itens = await fetch('/api/medico/farmacia/itens').then(res => res.json());
     const select = document.getElementById('prescricaoItem');
     select.innerHTML = '<option value="">Selecione um item...</option>';
-    // Usamos sal_codigo e nome_produto do nosso novo schema
     itens.forEach(item => select.innerHTML += `<option value="${item.sal_codigo}">${item.nome_produto}</option>`);
 }
 
-// --- FUNÇÃO MODIFICADA (2/2) ---
 async function adicionarPrescricao(event) {
     event.preventDefault();
     if (!ATENDIMENTO_ID_ATUAL) return;
@@ -503,19 +489,15 @@ async function adicionarPrescricao(event) {
             body: JSON.stringify(dados)
         });
 
-        // --- INÍCIO DA CAPTURA DE ERRO ---
-        // Se a resposta NÃO for OK (Ex: erro 400 da alergia)
         if (!response.ok) {
-            const erro = await response.json(); // Pega a mensagem de erro do backend
-            throw new Error(erro.message); // Lança o erro
+            const erro = await response.json(); 
+            throw new Error(erro.message); 
         }
-        // --- FIM DA CAPTURA DE ERRO ---
 
         document.getElementById('formPrescricao').reset();
-        carregarPrescricoes(ATENDIMENTO_ID_ATUAL); // Recarrega
+        carregarPrescricoes(ATENDIMENTO_ID_ATUAL);
         
     } catch (error) {
-        // Mostra o erro da alergia (ou qualquer outro) num alerta
         alert(`Erro ao prescrever: ${error.message}`);
     }
 }
@@ -533,6 +515,17 @@ async function carregarPrescricoes(atendimentoId) {
     });
 }
 
+// --- FUNÇÃO NOVA (Gatilho Impressão PEP) ---
+async function imprimirPEP() {
+    if (!ATENDIMENTO_ID_ATUAL) {
+        alert("Nenhum atendimento ativo selecionado.");
+        return;
+    }
+    // Usa a rota existente de dados completos e evoluções
+    window.open(`/impresso_pep.html?id=${ATENDIMENTO_ID_ATUAL}`, '_blank', 'width=800,height=600');
+}
+// --- FIM DA FUNÇÃO NOVA ---
+
 async function encaminhar(proximo_fluxo) {
     if (!ATENDIMENTO_ID_ATUAL) return;
     const feedback = document.getElementById('feedbackEncaminhamento');
@@ -549,7 +542,6 @@ async function encaminhar(proximo_fluxo) {
         feedback.innerHTML = `<p style="color:green">${result.message}</p>`;
         document.querySelectorAll('.encaminhamento-buttons button').forEach(btn => btn.disabled = true);
         
-        // Se for alta, limpa a tela do médico
         if(proximo_fluxo === 'alta') {
             setTimeout(() => {
                 ATENDIMENTO_ID_ATUAL = null;
@@ -574,7 +566,7 @@ async function carregarFilaFarmacia() {
     const response = await fetch('/api/farmacia/pendentes');
     const prescricoes = await response.json();
     const container = document.getElementById('fila-farmacia');
-    container.innerHTML = ''; // Limpa
+    container.innerHTML = ''; 
 
     if (prescricoes.length === 0) {
         container.innerHTML = '<p>Nenhuma prescrição pendente.</p>';
@@ -583,7 +575,7 @@ async function carregarFilaFarmacia() {
 
     prescricoes.forEach(pr => {
         const item = document.createElement('div');
-        item.className = 'card'; // Reusa a classe .card
+        item.className = 'card'; 
 
         let materiaisHtml = '<ul>';
         pr.materiais_para_baixa.forEach(mat => {
